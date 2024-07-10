@@ -20,13 +20,14 @@ const register = async (req: Request, res: Response) => {
       username,
       email,
       password: hashedPassword,
-      profilePic: "avatar.jpg", // Default profile picture
-      my_ratings: [], // Initialize as empty arrays
+      profilePic: "avatar.jpg",
+      my_ratings: [],
       comments: [],
+      tokens: [],
     });
-    return res.status(201).json(newUser); // Respond with 201 status code for created
-  } catch (err: any) {
-    return res.status(500).send(err.message);
+    return res.send(newUser);
+  } catch (err) {
+    return res.status(400).send((err as Error).message);
   }
 };
 
@@ -112,8 +113,8 @@ const refresh = async (req: Request, res: Response) => {
         return res.status(200).send(tokens);
       }
     );
-  } catch (err: any) {
-    return res.status(400).send(err.message);
+  } catch (err) {
+    return res.status(400).send((err as Error).message);
   }
 };
 
@@ -150,8 +151,8 @@ const logout = async (req: Request, res: Response) => {
         return res.status(200).send();
       }
     );
-  } catch (err: any) {
-    return res.status(400).send(err.message);
+  } catch (err) {
+    return res.status(400).send((err as Error).message);
   }
 };
 

@@ -39,7 +39,6 @@ const UserSchema = new mongoose.Schema<IUser>({
   },
   tokens: {
     type: [String],
-    default: [],
   },
 });
 
