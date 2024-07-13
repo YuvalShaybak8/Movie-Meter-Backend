@@ -25,7 +25,27 @@ const register = async (req: Request, res: Response) => {
       comments: [],
       tokens: [],
     });
-    return res.send(newUser);
+
+    const tokens = await generateTokens(newUser);
+    if (!tokens) {
+      return res.status(400).send("Error generating tokens");
+    }
+
+    // Create a user object without sensitive information
+    const userResponse = {
+      _id: newUser._id,
+      username: newUser.username,
+      email: newUser.email,
+      profilePic: newUser.profilePic,
+      my_ratings: newUser.my_ratings,
+      comments: newUser.comments,
+    };
+
+    // Send both tokens and user data
+    return res.status(201).json({
+      user: userResponse,
+      ...tokens,
+    });
   } catch (err) {
     return res.status(400).send((err as Error).message);
   }
@@ -77,7 +97,22 @@ const login = async (req: Request, res: Response) => {
     if (!tokens) {
       return res.status(400).send("Error generating tokens");
     }
-    return res.status(200).send(tokens);
+
+    // Create a user object without sensitive information
+    const userResponse = {
+      _id: user._id,
+      username: user.username,
+      email: user.email,
+      profilePic: user.profilePic,
+      my_ratings: user.my_ratings,
+      comments: user.comments,
+    };
+
+    // Send both tokens and user data
+    return res.status(200).json({
+      user: userResponse,
+      ...tokens,
+    });
   } catch (err: any) {
     return res.status(400).send(err.message);
   }
