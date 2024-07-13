@@ -74,7 +74,7 @@ class RatingController {
 
   async getAll(req: Request, res: Response) {
     try {
-      const ratings = await Rating.find();
+      const ratings = await Rating.find().populate("owner", "username");
       res.status(200).json(ratings);
     } catch (err: any) {
       res.status(500).send(err.message);
