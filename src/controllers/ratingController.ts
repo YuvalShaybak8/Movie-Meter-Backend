@@ -1,8 +1,77 @@
 import { Request, Response } from "express";
 import Rating, { IRating } from "../models/ratingModel";
+import User from "../models/userModel";
 import { AuthRequest } from "./authController";
+import multer from "multer";
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "uploads/");
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + "-" + file.originalname);
+  },
+});
+
+const upload = multer({ storage: storage });
 
 class RatingController {
+  async create(req: AuthRequest, res: Response) {
+    upload.single("movie_image")(req, res, async (err) => {
+      if (err instanceof multer.MulterError) {
+        console.error("Multer error:", err);
+        return res.status(500).json(err);
+      } else if (err) {
+        console.error("Unknown error:", err);
+        return res.status(500).json(err);
+      }
+
+      const { title, rating } = req.body;
+      const user = req.user._id;
+      const movie_image = req.file ? req.file.filename : null;
+
+      console.log("Received data:", {
+        title,
+        rating,
+        user,
+        movie_image,
+      });
+
+      try {
+        const newRating = await Rating.create({
+          title,
+          rating: Number(rating),
+          movie_image,
+          owner: user,
+        });
+
+        // Update user's my_ratings array with the new rating object
+        const updatedUser = await User.findByIdAndUpdate(
+          user,
+          {
+            $push: {
+              my_ratings: {
+                _id: newRating._id,
+                title: newRating.title,
+                rating: newRating.rating,
+                movie_image: newRating.movie_image,
+                createdAt: newRating.createdAt,
+                // Add any other fields you want to include
+              },
+            },
+          },
+          { new: true }
+        );
+
+        console.log("Created rating:", newRating);
+        res.status(201).json(newRating);
+      } catch (err: any) {
+        console.error("Error creating rating:", err);
+        res.status(500).send(err.message);
+      }
+    });
+  }
+
   async getAll(req: Request, res: Response) {
     try {
       const ratings = await Rating.find();
@@ -19,22 +88,6 @@ class RatingController {
         return res.status(404).send("Rating not found");
       }
       res.status(200).json(rating);
-    } catch (err: any) {
-      res.status(500).send(err.message);
-    }
-  }
-
-  async create(req: AuthRequest, res: Response) {
-    const { movieId, rating, comment } = req.body;
-    const user = req.user._id;
-    try {
-      const newRating = await Rating.create({
-        ownerId: user,
-        movieId,
-        rating,
-        comments: [comment],
-      });
-      res.status(201).json(newRating);
     } catch (err: any) {
       res.status(500).send(err.message);
     }

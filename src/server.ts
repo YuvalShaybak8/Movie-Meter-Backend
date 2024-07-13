@@ -27,6 +27,7 @@ app.use(express.static(path.resolve("public")));
 app.use("/auth", authRoute);
 app.use("/users", UserRoute);
 app.use("/ratings", RatingRoute);
+app.use("/uploads", express.static("uploads"));
 
 app.get("/**", (req, res) => {
   res.sendFile(path.resolve("public/index.html"));

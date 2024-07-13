@@ -45,13 +45,4 @@ const updateUser = async (req: Request, res: Response) => {
   }
 };
 
-const deleteUser = async (req: Request, res: Response) => {
-  try {
-    await User.findByIdAndDelete(req.params.id);
-    res.status(200).send();
-  } catch (err: any) {
-    res.status(500).send(err.message);
-  }
-};
-
-export default { getUsers, getUserById, updateUser, deleteUser };
+export default { getUsers, getUserById, updateUser };

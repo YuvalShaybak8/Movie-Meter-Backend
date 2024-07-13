@@ -6,7 +6,13 @@ export interface IUser {
   email: string;
   password: string;
   profilePic: string;
-  my_ratings: string[];
+  my_ratings: Array<{
+    _id: mongoose.Types.ObjectId;
+    title: string;
+    rating: number;
+    movie_image: string;
+    createdAt: Date;
+  }>;
   comments: string[];
   tokens: string[];
 }
@@ -29,10 +35,15 @@ const UserSchema = new mongoose.Schema<IUser>({
     type: String,
     default: "/avatar.jpg", // Default profile picture
   },
-  my_ratings: {
-    type: [String],
-    default: [],
-  },
+  my_ratings: [
+    {
+      _id: { type: mongoose.Schema.Types.ObjectId, ref: "Rating" },
+      title: String,
+      rating: Number,
+      movie_image: String,
+      createdAt: { type: Date, default: Date.now },
+    },
+  ],
   comments: {
     type: [String],
     default: [],

@@ -1,7 +1,8 @@
 import express from "express";
-const router = express.Router();
 import ratingController from "../controllers/ratingController";
 import { authMiddleware } from "../controllers/authController";
+
+const router = express.Router();
 
 router.get("/", ratingController.getAll);
 router.get("/:id", ratingController.getById);
