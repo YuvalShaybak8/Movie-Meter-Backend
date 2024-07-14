@@ -33,7 +33,7 @@ const UserSchema = new mongoose.Schema<IUser>({
   },
   profilePic: {
     type: String,
-    default: "/avatar.jpg", // Default profile picture
+    default: "/avatar.jpg",
   },
   my_ratings: [
     {

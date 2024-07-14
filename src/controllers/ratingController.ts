@@ -81,6 +81,17 @@ class RatingController {
     }
   }
 
+  getUserRatings = async (req: AuthRequest, res: Response) => {
+    try {
+      const userId = req.user._id;
+      const ratings = await Rating.find({ owner: userId });
+      res.json(ratings);
+    } catch (error) {
+      console.error("Error fetching user ratings:", error);
+      res.status(500).json({ message: "Error fetching user ratings" });
+    }
+  };
+
   async getById(req: Request, res: Response) {
     try {
       const rating = await Rating.findById(req.params.id);
