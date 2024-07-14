@@ -1,6 +1,19 @@
 import { Request, Response } from "express";
 import User, { IUser } from "../models/userModel";
 import bcrypt from "bcrypt";
+import multer from "multer";
+import path from "path";
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "uploads/");
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + path.extname(file.originalname));
+  },
+});
+
+const upload = multer({ storage: storage });
 
 const getUsers = async (req: Request, res: Response) => {
   try {
@@ -24,25 +37,30 @@ const getUserById = async (req: Request, res: Response) => {
 };
 
 const updateUser = async (req: Request, res: Response) => {
-  const { email, password, username, profilePic, my_ratings, comments } =
-    req.body;
-  try {
-    if (password) {
-      const salt = await bcrypt.genSalt(10);
-      req.body.password = await bcrypt.hash(password, salt);
+  upload.single("profilePic")(req, res, async (err) => {
+    if (err) {
+      return res.status(400).json({ message: "Error uploading file" });
     }
-    const updatedUser = await User.findByIdAndUpdate(
-      req.params.id,
-      { email, password, username, profilePic, my_ratings, comments },
-      { new: true }
-    );
-    if (!updatedUser) {
-      return res.status(404).send("User not found");
+
+    const { username } = req.body;
+    const profilePic = req.file ? req.file.filename : undefined;
+
+    try {
+      const updatedUser = await User.findByIdAndUpdate(
+        req.params.id,
+        { username, ...(profilePic && { profilePic }) },
+        { new: true }
+      );
+
+      if (!updatedUser) {
+        return res.status(404).send("User not found");
+      }
+
+      res.status(200).json(updatedUser);
+    } catch (err: any) {
+      res.status(500).send(err.message);
     }
-    res.status(200).json(updatedUser);
-  } catch (err: any) {
-    res.status(500).send(err.message);
-  }
+  });
 };
 
 export default { getUsers, getUserById, updateUser };
