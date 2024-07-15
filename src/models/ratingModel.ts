@@ -5,9 +5,14 @@ export interface IRating {
   title: string;
   rating: number;
   movie_image: string;
-  comments: string[];
   createdAt: Date;
   owner: string;
+  comments: Array<{
+    userId: mongoose.Types.ObjectId;
+    username: string;
+    comment: string;
+    createdAt: Date;
+  }>;
 }
 
 const RatingSchema = new mongoose.Schema<IRating>({
@@ -23,10 +28,6 @@ const RatingSchema = new mongoose.Schema<IRating>({
     type: Number,
     required: true,
   },
-  comments: {
-    type: [String],
-    default: [],
-  },
   createdAt: {
     type: Date,
     default: Date.now,
@@ -35,6 +36,14 @@ const RatingSchema = new mongoose.Schema<IRating>({
     type: String,
     required: true,
   },
+  comments: [
+    {
+      userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+      username: { type: String, required: true },
+      comment: { type: String, required: true },
+      createdAt: { type: Date, default: Date.now },
+    },
+  ],
 });
 
 export default mongoose.model<IRating>("Rating", RatingSchema);

@@ -13,7 +13,11 @@ export interface IUser {
     movie_image: string;
     createdAt: Date;
   }>;
-  comments: string[];
+  comments: Array<{
+    ratingId: mongoose.Types.ObjectId;
+    comment: string;
+    createdAt: Date;
+  }>;
   tokens: string[];
 }
 
@@ -44,10 +48,13 @@ const UserSchema = new mongoose.Schema<IUser>({
       createdAt: { type: Date, default: Date.now },
     },
   ],
-  comments: {
-    type: [String],
-    default: [],
-  },
+  comments: [
+    {
+      ratingId: { type: mongoose.Schema.Types.ObjectId, ref: "Rating" },
+      comment: { type: String, required: true },
+      createdAt: { type: Date, default: Date.now },
+    },
+  ],
   tokens: {
     type: [String],
   },
