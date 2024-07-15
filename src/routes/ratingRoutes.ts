@@ -10,5 +10,6 @@ router.get("/:id", ratingController.getById);
 router.post("/", authMiddleware, ratingController.create);
 router.put("/:id", authMiddleware, ratingController.update);
 router.delete("/:id", authMiddleware, ratingController.delete);
+router.post("/:id/comment", authMiddleware, ratingController.addComment);
 
 export default router;

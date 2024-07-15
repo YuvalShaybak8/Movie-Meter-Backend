@@ -74,7 +74,10 @@ class RatingController {
 
   async getAll(req: Request, res: Response) {
     try {
-      const ratings = await Rating.find().populate("owner", "username");
+      const ratings = await Rating.find().populate("owner", "username").lean();
+      ratings.forEach((rating) => {
+        rating.commentsCount = rating.comments.length;
+      });
       res.status(200).json(ratings);
     } catch (err: any) {
       res.status(500).send(err.message);
@@ -84,7 +87,10 @@ class RatingController {
   getUserRatings = async (req: AuthRequest, res: Response) => {
     try {
       const userId = req.user._id;
-      const ratings = await Rating.find({ owner: userId });
+      const ratings = await Rating.find({ owner: userId }).lean();
+      ratings.forEach((rating) => {
+        rating.commentsCount = rating.comments.length;
+      });
       res.json(ratings);
     } catch (error) {
       console.error("Error fetching user ratings:", error);
@@ -123,6 +129,54 @@ class RatingController {
       await Rating.findByIdAndDelete(req.params.id);
       res.status(200).send();
     } catch (err: any) {
+      res.status(500).send(err.message);
+    }
+  }
+
+  async addComment(req: AuthRequest, res: Response) {
+    const { id } = req.params;
+    const { comment } = req.body;
+    const userId = req.user._id;
+
+    try {
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(404).send("User not found");
+      }
+
+      const updatedRating = await Rating.findByIdAndUpdate(
+        id,
+        {
+          $push: {
+            comments: {
+              userId,
+              username: user.username,
+              comment,
+              createdAt: new Date(),
+            },
+          },
+        },
+        { new: true }
+      ).populate("comments.userId", "username");
+
+      if (!updatedRating) {
+        return res.status(404).send("Rating not found");
+      }
+
+      // Update the user's comments array
+      await User.findByIdAndUpdate(userId, {
+        $push: {
+          comments: {
+            ratingId: updatedRating._id,
+            comment,
+            createdAt: new Date(),
+          },
+        },
+      });
+
+      res.status(200).json(updatedRating);
+    } catch (err: any) {
+      console.error("Error adding comment:", err);
       res.status(500).send(err.message);
     }
   }
