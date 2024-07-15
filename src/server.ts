@@ -1,8 +1,7 @@
 import express from "express";
 import cors from "cors";
 import path from "path";
-import { config } from "dotenv";
-config();
+import dotenv from "dotenv";
 import mongoose from "mongoose";
 import bodyParser from "body-parser";
 
@@ -10,12 +9,20 @@ import UserRoute from "./routes/userRoutes";
 import RatingRoute from "./routes/ratingRoutes";
 import authRoute from "./routes/authRoutes";
 
+dotenv.config();
+
 const app = express();
 const PORT = process.env.PORT || 5500;
 
+// Check for GOOGLE_CLIENT_ID
+if (!process.env.GOOGLE_CLIENT_ID) {
+  console.error("GOOGLE_CLIENT_ID is not set in the environment variables");
+  process.exit(1);
+}
+
 const corsOptions = {
   origin: "*",
-  methods: ["GET", "POST", "PUT", "DELETE"], // Allow PUT method
+  methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
 };

@@ -51,7 +51,7 @@ const register = async (req: Request, res: Response) => {
   }
 };
 
-const generateTokens = async (
+export const generateTokens = async (
   user: Document<unknown, object, IUser> & IUser & Required<{ _id: string }>
 ): Promise<{ accessToken: string; refreshToken: string }> => {
   const accessToken = jwt.sign({ _id: user._id }, process.env.TOKEN_SECRET!, {
@@ -202,14 +202,27 @@ export const authMiddleware = async (
   if (!token) {
     return res.sendStatus(401);
   }
-  jwt.verify(token, process.env.TOKEN_SECRET!, (err, data: jwt.JwtPayload) => {
-    if (err || !data) {
+  try {
+    const decoded = jwt.verify(token, process.env.TOKEN_SECRET!) as JwtPayload;
+    if (!decoded._id) {
       return res.sendStatus(401);
     }
-    const id = data._id;
-    req.user = { _id: id };
+    const user = await User.findById(decoded._id);
+    if (!user) {
+      return res.sendStatus(401);
+    }
+    req.user = user;
     return next();
-  });
+  } catch (err) {
+    return res.sendStatus(401);
+  }
 };
 
-export default { register, login, logout, authMiddleware, refresh };
+export default {
+  register,
+  login,
+  logout,
+  generateTokens,
+  authMiddleware,
+  refresh,
+};

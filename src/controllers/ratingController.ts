@@ -111,11 +111,11 @@ class RatingController {
   }
 
   async update(req: Request, res: Response) {
-    const { rating, comment } = req.body;
+    const { rating, title } = req.body;
     try {
       const updatedRating = await Rating.findByIdAndUpdate(
         req.params.id,
-        { rating, $push: { comments: comment } },
+        { rating, title },
         { new: true }
       );
       res.status(200).json(updatedRating);
@@ -132,7 +132,6 @@ class RatingController {
       res.status(500).send(err.message);
     }
   }
-
   async addComment(req: AuthRequest, res: Response) {
     const { id } = req.params;
     const { comment } = req.body;
