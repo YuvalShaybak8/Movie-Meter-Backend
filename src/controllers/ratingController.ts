@@ -43,9 +43,12 @@ class RatingController {
           rating: Number(rating),
           movie_image,
           owner: user,
+          ratingOfotherUsers: [],
         });
 
-        // Update user's my_ratings array with the new rating object
+        newRating.calculateAverageRating();
+        await newRating.save();
+
         const updatedUser = await User.findByIdAndUpdate(
           user,
           {
@@ -56,7 +59,7 @@ class RatingController {
                 rating: newRating.rating,
                 movie_image: newRating.movie_image,
                 createdAt: newRating.createdAt,
-                // Add any other fields you want to include
+                averageRating: newRating.averageRating,
               },
             },
           },
@@ -132,6 +135,7 @@ class RatingController {
       res.status(500).send(err.message);
     }
   }
+
   async addComment(req: AuthRequest, res: Response) {
     const { id } = req.params;
     const { comment } = req.body;
@@ -162,7 +166,6 @@ class RatingController {
         return res.status(404).send("Rating not found");
       }
 
-      // Update the user's comments array
       await User.findByIdAndUpdate(userId, {
         $push: {
           comments: {
@@ -176,6 +179,61 @@ class RatingController {
       res.status(200).json(updatedRating);
     } catch (err: any) {
       console.error("Error adding comment:", err);
+      res.status(500).send(err.message);
+    }
+  }
+
+  async addUserRating(req: AuthRequest, res: Response) {
+    const { id } = req.params;
+    const { rating } = req.body;
+    const userId = req.user._id;
+
+    try {
+      const ratingDoc = await Rating.findById(id);
+      if (!ratingDoc) {
+        return res.status(404).send("Rating not found");
+      }
+
+      if (ratingDoc.owner.toString() === userId.toString()) {
+        return res.status(400).send("You can't rate your own movie");
+      }
+
+      const existingRatingIndex = ratingDoc.ratingOfotherUsers.findIndex(
+        (r) => r.userId.toString() === userId.toString()
+      );
+
+      if (existingRatingIndex !== -1) {
+        return res.status(400).send("You have already rated this movie");
+      }
+
+      ratingDoc.ratingOfotherUsers.push({ userId, rating: Number(rating) });
+      ratingDoc.calculateAverageRating();
+      await ratingDoc.save();
+
+      res.status(200).json({ averageRating: ratingDoc.averageRating });
+    } catch (err: any) {
+      console.error("Error adding user rating:", err);
+      res.status(500).send(err.message);
+    }
+  }
+
+  async getUserRatingForMovie(req: AuthRequest, res: Response) {
+    const { id: movieId, userId } = req.params;
+    try {
+      const rating = await Rating.findById(movieId);
+      if (!rating) {
+        return res.status(404).send("Rating not found");
+      }
+      const userRating = rating.ratingOfotherUsers.find(
+        (r) => r.userId.toString() === userId
+      );
+      if (userRating) {
+        res.status(200).json({ rating: userRating.rating });
+      } else {
+        res.status(200).json({ rating: 0 });
+      }
+    } catch (err: any) {
+      console.error("Error fetching user rating for movie:", err);
       res.status(500).send(err.message);
     }
   }
