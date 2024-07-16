@@ -20,7 +20,6 @@ export const googleSignin = async (req: Request, res: Response) => {
       return res.status(400).send("Invalid Google credentials");
     }
 
-    // Extract username from email
     const username = payload.email.split("@")[0];
 
     let user = await User.findOne({ email: payload.email });
@@ -28,8 +27,8 @@ export const googleSignin = async (req: Request, res: Response) => {
     if (!user) {
       user = await User.create({
         email: payload.email,
-        username: username, // Use the extracted username
-        profilePic: payload.picture || "avatar.jpg",
+        username: username,
+        profilePic: "avatar.jpg",
         password: "google-signin",
         my_ratings: [],
         comments: [],
@@ -46,7 +45,6 @@ export const googleSignin = async (req: Request, res: Response) => {
       return res.status(400).send("Error generating tokens");
     }
 
-    // Create a user object without sensitive information
     const userResponse = {
       _id: user._id,
       username: user.username,
@@ -56,7 +54,6 @@ export const googleSignin = async (req: Request, res: Response) => {
       comments: user.comments,
     };
 
-    // Send both tokens and user data
     return res.status(200).json({
       user: userResponse,
       ...tokens,

@@ -31,7 +31,6 @@ const register = async (req: Request, res: Response) => {
       return res.status(400).send("Error generating tokens");
     }
 
-    // Create a user object without sensitive information
     const userResponse = {
       _id: newUser._id,
       username: newUser.username,
@@ -41,7 +40,6 @@ const register = async (req: Request, res: Response) => {
       comments: newUser.comments,
     };
 
-    // Send both tokens and user data
     return res.status(201).json({
       user: userResponse,
       ...tokens,
@@ -98,7 +96,6 @@ const login = async (req: Request, res: Response) => {
       return res.status(400).send("Error generating tokens");
     }
 
-    // Create a user object without sensitive information
     const userResponse = {
       _id: user._id,
       username: user.username,
@@ -108,7 +105,6 @@ const login = async (req: Request, res: Response) => {
       comments: user.comments,
     };
 
-    // Send both tokens and user data
     return res.status(200).json({
       user: userResponse,
       ...tokens,
