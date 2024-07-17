@@ -3,6 +3,8 @@ import Rating, { IRating } from "../models/ratingModel";
 import User from "../models/userModel";
 import { AuthRequest } from "./authController";
 import multer from "multer";
+import fs from "fs";
+import path from "path";
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -113,24 +115,86 @@ class RatingController {
     }
   }
 
-  async update(req: Request, res: Response) {
-    const { rating, title } = req.body;
-    try {
-      const updatedRating = await Rating.findByIdAndUpdate(
-        req.params.id,
-        { rating, title },
-        { new: true }
-      );
-      res.status(200).json(updatedRating);
-    } catch (err: any) {
-      res.status(500).send(err.message);
-    }
+  async update(req: AuthRequest, res: Response) {
+    upload.single("movie_image")(req, res, async (err) => {
+      if (err instanceof multer.MulterError) {
+        console.error("Multer error:", err);
+        return res.status(500).json(err);
+      } else if (err) {
+        console.error("Unknown error:", err);
+        return res.status(500).json(err);
+      }
+
+      const { rating, title } = req.body;
+      const movie_image = req.file ? req.file.filename : undefined;
+
+      try {
+        const oldRating = await Rating.findById(req.params.id);
+        if (!oldRating) {
+          return res.status(404).send("Rating not found");
+        }
+
+        const updatedFields: any = { rating: Number(rating), title };
+        if (movie_image) {
+          updatedFields.movie_image = movie_image;
+          // Delete old image
+          if (oldRating.movie_image) {
+            const oldImagePath = path.join("uploads", oldRating.movie_image);
+            fs.unlink(oldImagePath, (err) => {
+              if (err) console.error("Error deleting old image:", err);
+            });
+          }
+        }
+
+        const updatedRating = await Rating.findByIdAndUpdate(
+          req.params.id,
+          updatedFields,
+          { new: true }
+        );
+
+        // Update user's my_ratings
+        await User.updateOne(
+          { _id: req.user._id, "my_ratings._id": req.params.id },
+          {
+            $set: {
+              "my_ratings.$.title": updatedRating.title,
+              "my_ratings.$.rating": updatedRating.rating,
+              "my_ratings.$.movie_image": updatedRating.movie_image,
+            },
+          }
+        );
+
+        res.status(200).json(updatedRating);
+      } catch (err: any) {
+        res.status(500).send(err.message);
+      }
+    });
   }
 
-  async delete(req: Request, res: Response) {
+  async delete(req: AuthRequest, res: Response) {
     try {
+      const rating = await Rating.findById(req.params.id);
+      if (!rating) {
+        return res.status(404).send("Rating not found");
+      }
+
+      // Delete the image file
+      if (rating.movie_image) {
+        const imagePath = path.join("uploads", rating.movie_image);
+        fs.unlink(imagePath, (err) => {
+          if (err) console.error("Error deleting image file:", err);
+        });
+      }
+
       await Rating.findByIdAndDelete(req.params.id);
-      res.status(200).send();
+
+      // Remove rating from user's my_ratings
+      await User.updateOne(
+        { _id: req.user._id },
+        { $pull: { my_ratings: { _id: req.params.id } } }
+      );
+
+      res.status(200).send("Rating deleted successfully");
     } catch (err: any) {
       res.status(500).send(err.message);
     }
