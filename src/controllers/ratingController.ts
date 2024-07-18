@@ -129,28 +129,30 @@ class RatingController {
       const movie_image = req.file ? req.file.filename : undefined;
 
       try {
-        const oldRating = await Rating.findById(req.params.id);
-        if (!oldRating) {
+        const ratingDoc = await Rating.findById(req.params.id);
+        if (!ratingDoc) {
           return res.status(404).send("Rating not found");
         }
 
-        const updatedFields: any = { rating: Number(rating), title };
+        // Update fields
+        ratingDoc.title = title;
+        ratingDoc.rating = Number(rating);
         if (movie_image) {
-          updatedFields.movie_image = movie_image;
-          // Delete old image
-          if (oldRating.movie_image) {
-            const oldImagePath = path.join("uploads", oldRating.movie_image);
+          // Handle image update
+          if (ratingDoc.movie_image) {
+            const oldImagePath = path.join("uploads", ratingDoc.movie_image);
             fs.unlink(oldImagePath, (err) => {
               if (err) console.error("Error deleting old image:", err);
             });
           }
+          ratingDoc.movie_image = movie_image;
         }
 
-        const updatedRating = await Rating.findByIdAndUpdate(
-          req.params.id,
-          updatedFields,
-          { new: true }
-        );
+        // Recalculate average rating
+        ratingDoc.calculateAverageRating();
+
+        // Save the updated rating
+        const updatedRating = await ratingDoc.save();
 
         // Update user's my_ratings
         await User.updateOne(
@@ -160,6 +162,7 @@ class RatingController {
               "my_ratings.$.title": updatedRating.title,
               "my_ratings.$.rating": updatedRating.rating,
               "my_ratings.$.movie_image": updatedRating.movie_image,
+              "my_ratings.$.averageRating": updatedRating.averageRating,
             },
           }
         );

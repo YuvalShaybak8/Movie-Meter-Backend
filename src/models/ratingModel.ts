@@ -63,12 +63,13 @@ const RatingSchema = new mongoose.Schema<IRating>({
 
 RatingSchema.methods.calculateAverageRating = function () {
   const totalRatings = this.ratingOfotherUsers.length;
-  if (totalRatings === 0) {
-    this.averageRating = this.rating;
-  } else {
-    const sum = this.ratingOfotherUsers.reduce((a, b) => a + b.rating, 0);
-    this.averageRating = (sum + this.rating) / (totalRatings + 1);
-  }
+  const sumOfOtherRatings = this.ratingOfotherUsers.reduce(
+    (sum, userRating) => sum + userRating.rating,
+    0
+  );
+  const totalSum = sumOfOtherRatings + this.rating;
+  const totalCount = totalRatings + 1; // Include the owner's rating
+  this.averageRating = Math.round((totalSum / totalCount) * 10) / 10; // Round to 1 decimal place
 };
 
 RatingSchema.pre("save", function (next) {
