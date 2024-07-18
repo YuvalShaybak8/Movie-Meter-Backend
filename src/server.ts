@@ -12,7 +12,7 @@ import authRoute from "./routes/authRoutes";
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 5500;
+const HTTP_PORT = process.env.HTTP_PORT || 5500;
 
 // Check for GOOGLE_CLIENT_ID
 if (!process.env.GOOGLE_CLIENT_ID) {
@@ -51,8 +51,8 @@ const startServer = async () => {
 
     await mongoose.connect(process.env.DATABASE_URL!);
 
-    app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
+    app.listen(HTTP_PORT, () => {
+      console.log(`Server running on port ${HTTP_PORT}`);
     });
   } catch (error) {
     console.error("Error starting server:", error);
