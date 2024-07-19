@@ -5,8 +5,8 @@ import { googleSignin } from "../controllers/googleAuthController";
 
 router.post("/register", authController.register);
 router.post("/login", authController.login);
+router.post("/logout", authController.logout);
 router.get("/refresh", authController.refresh);
-router.get("/logout", authController.logout);
 router.post("/google", googleSignin);
 
 export default router;

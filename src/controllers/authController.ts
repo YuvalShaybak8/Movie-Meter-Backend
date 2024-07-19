@@ -40,6 +40,8 @@ const register = async (req: Request, res: Response) => {
       comments: newUser.comments,
     };
 
+    console.log("User registered:", userResponse);
+
     return res.status(201).json({
       user: userResponse,
       ...tokens,
@@ -78,6 +80,7 @@ export const generateTokens = async (
 
 const login = async (req: Request, res: Response) => {
   const { email, password } = req.body;
+  console.log("Email & Password", email, password);
   if (!email || !password) {
     return res.status(400).send("Email and password are required");
   }
@@ -104,6 +107,8 @@ const login = async (req: Request, res: Response) => {
       my_ratings: user.my_ratings,
       comments: user.comments,
     };
+
+    console.log("User logged in:", userResponse);
 
     return res.status(200).json({
       user: userResponse,
@@ -156,34 +161,26 @@ const extractToken = (req: Request): string | undefined => {
 };
 
 const logout = async (req: Request, res: Response) => {
-  const refreshToken = extractToken(req);
-  if (!refreshToken) {
-    return res.sendStatus(401);
+  const { token } = req.body;
+  if (!token) {
+    return res.status(401).send("No token provided");
   }
+
   try {
-    jwt.verify(
-      refreshToken,
-      process.env.TOKEN_SECRET!,
-      async (err, data: jwt.JwtPayload) => {
-        if (err || !data) {
-          return res.sendStatus(403);
-        }
-        const user = await User.findOne({ _id: data._id });
-        if (!user) {
-          return res.sendStatus(403);
-        }
-        if (!user.tokens.includes(refreshToken)) {
-          user.tokens = [];
-          await user.save();
-          return res.sendStatus(403);
-        }
-        user.tokens = user.tokens.filter((token) => token !== refreshToken);
-        await user.save();
-        return res.status(200).send();
-      }
-    );
+    const decoded = jwt.verify(token, process.env.TOKEN_SECRET!) as JwtPayload;
+    const user = await User.findById(decoded._id);
+    if (!user) {
+      return res.sendStatus(403);
+    }
+
+    user.tokens = user.tokens.filter((t) => t !== token);
+    await user.save();
+
+    console.log("Logout successful, tokens removed");
+    return res.status(200).send();
   } catch (err) {
-    return res.status(400).send((err as Error).message);
+    console.error("Logout error:", err);
+    return res.status(403).send("Invalid token");
   }
 };
 
