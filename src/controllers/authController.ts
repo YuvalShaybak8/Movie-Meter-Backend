@@ -125,30 +125,35 @@ const refresh = async (req: Request, res: Response) => {
     return res.sendStatus(401);
   }
   try {
-    jwt.verify(
-      refreshToken,
-      process.env.TOKEN_SECRET!,
-      async (err, data: jwt.JwtPayload) => {
-        if (err || !data) {
-          return res.sendStatus(403);
-        }
-        const user = await User.findOne({ _id: data._id });
-        if (!user) {
-          return res.sendStatus(403);
-        }
-        if (!user.tokens.includes(refreshToken)) {
-          user.tokens = [];
-          await user.save();
-          return res.sendStatus(403);
-        }
-        user.tokens = user.tokens.filter((token) => token !== refreshToken);
-        const tokens = await generateTokens(user);
-        if (!tokens) {
-          return res.status(400).send("Error generating tokens");
-        }
-        return res.status(200).send(tokens);
+    jwt.verify(refreshToken, process.env.TOKEN_SECRET!, (err, data) => {
+      if (err || !data) {
+        return res.sendStatus(403);
       }
-    );
+
+      (async () => {
+        try {
+          const user = await User.findOne({
+            _id: (data as jwt.JwtPayload)._id,
+          });
+          if (!user) {
+            return res.sendStatus(403);
+          }
+          if (!user.tokens.includes(refreshToken)) {
+            user.tokens = [];
+            await user.save();
+            return res.sendStatus(403);
+          }
+          user.tokens = user.tokens.filter((token) => token !== refreshToken);
+          const tokens = await generateTokens(user);
+          if (!tokens) {
+            return res.status(400).send("Error generating tokens");
+          }
+          return res.status(200).send(tokens);
+        } catch (err) {
+          return res.status(400).send((err as Error).message);
+        }
+      })();
+    });
   } catch (err) {
     return res.status(400).send((err as Error).message);
   }
@@ -204,7 +209,7 @@ export const authMiddleware = async (
     if (!user) {
       return res.sendStatus(401);
     }
-    req.user = user;
+    req.user = { _id: user._id.toString() };
     return next();
   } catch (err) {
     return res.sendStatus(401);

@@ -5,6 +5,7 @@ import { AuthRequest } from "./authController";
 import multer from "multer";
 import fs from "fs";
 import path from "path";
+import mongoose from "mongoose";
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -16,6 +17,11 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ storage: storage });
+
+// Interface extending IRating with commentsCount
+interface IRatingWithCommentsCount extends IRating {
+  commentsCount: number;
+}
 
 class RatingController {
   async create(req: AuthRequest, res: Response) {
@@ -79,7 +85,9 @@ class RatingController {
 
   async getAll(req: Request, res: Response) {
     try {
-      const ratings = await Rating.find().populate("owner", "username").lean();
+      const ratings: IRatingWithCommentsCount[] = await Rating.find()
+        .populate("owner", "username")
+        .lean();
       ratings.forEach((rating) => {
         rating.commentsCount = rating.comments.length;
       });
@@ -92,7 +100,9 @@ class RatingController {
   getUserRatings = async (req: AuthRequest, res: Response) => {
     try {
       const userId = req.user._id;
-      const ratings = await Rating.find({ owner: userId }).lean();
+      const ratings: IRatingWithCommentsCount[] = await Rating.find({
+        owner: userId,
+      }).lean();
       ratings.forEach((rating) => {
         rating.commentsCount = rating.comments.length;
       });
@@ -273,7 +283,10 @@ class RatingController {
         return res.status(400).send("You have already rated this movie");
       }
 
-      ratingDoc.ratingOfotherUsers.push({ userId, rating: Number(rating) });
+      ratingDoc.ratingOfotherUsers.push({
+        userId: new mongoose.Types.ObjectId(userId),
+        rating: Number(rating),
+      });
       ratingDoc.calculateAverageRating();
       await ratingDoc.save();
 

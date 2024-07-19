@@ -1,7 +1,6 @@
-import mongoose from "mongoose";
+import mongoose, { Document } from "mongoose";
 
-export interface IRating {
-  _id: string;
+export interface IRating extends Document {
   title: string;
   rating: number;
   movie_image: string;
@@ -18,6 +17,7 @@ export interface IRating {
     rating: number;
   }>;
   averageRating: number;
+  calculateAverageRating: () => void;
 }
 
 const RatingSchema = new mongoose.Schema<IRating>({
@@ -64,7 +64,7 @@ const RatingSchema = new mongoose.Schema<IRating>({
 RatingSchema.methods.calculateAverageRating = function () {
   const totalRatings = this.ratingOfotherUsers.length;
   const sumOfOtherRatings = this.ratingOfotherUsers.reduce(
-    (sum, userRating) => sum + userRating.rating,
+    (sum: any, userRating: { rating: any }) => sum + userRating.rating,
     0
   );
   const totalSum = sumOfOtherRatings + this.rating;
