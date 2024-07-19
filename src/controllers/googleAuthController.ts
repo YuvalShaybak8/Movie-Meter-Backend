@@ -28,7 +28,7 @@ export const googleSignin = async (req: Request, res: Response) => {
       user = await User.create({
         email: payload.email,
         username: username,
-        profilePic: payload.picture || "avatar.jpg",
+        profilePic: "avatar.jpg",
         password: "google-signin",
         my_ratings: [],
         comments: [],

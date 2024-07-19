@@ -189,10 +189,12 @@ const logout = async (req: Request, res: Response) => {
   }
 };
 
-export type AuthRequest = Request & { user: { _id: string } };
+export interface AuthRequest extends Request {
+  user?: { _id: string };
+}
 
 export const authMiddleware = async (
-  req: AuthRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ) => {
@@ -209,7 +211,7 @@ export const authMiddleware = async (
     if (!user) {
       return res.sendStatus(401);
     }
-    req.user = { _id: user._id.toString() };
+    (req as AuthRequest).user = { _id: user._id.toString() };
     return next();
   } catch (err) {
     return res.sendStatus(401);

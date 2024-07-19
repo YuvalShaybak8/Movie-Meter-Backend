@@ -35,7 +35,7 @@ class RatingController {
       }
 
       const { title, rating } = req.body;
-      const user = req.user._id;
+      const user = req.user!._id;
       const movie_image = req.file ? req.file.filename : null;
 
       console.log("Received data:", {
@@ -99,7 +99,7 @@ class RatingController {
 
   getUserRatings = async (req: AuthRequest, res: Response) => {
     try {
-      const userId = req.user._id;
+      const userId = req.user!._id;
       const ratings: IRatingWithCommentsCount[] = await Rating.find({
         owner: userId,
       }).lean();
@@ -166,7 +166,7 @@ class RatingController {
 
         // Update user's my_ratings
         await User.updateOne(
-          { _id: req.user._id, "my_ratings._id": req.params.id },
+          { _id: req.user!._id, "my_ratings._id": req.params.id },
           {
             $set: {
               "my_ratings.$.title": updatedRating.title,
@@ -203,7 +203,7 @@ class RatingController {
 
       // Remove rating from user's my_ratings
       await User.updateOne(
-        { _id: req.user._id },
+        { _id: req.user!._id },
         { $pull: { my_ratings: { _id: req.params.id } } }
       );
 
@@ -216,7 +216,7 @@ class RatingController {
   async addComment(req: AuthRequest, res: Response) {
     const { id } = req.params;
     const { comment } = req.body;
-    const userId = req.user._id;
+    const userId = req.user!._id;
 
     try {
       const user = await User.findById(userId);
@@ -263,7 +263,7 @@ class RatingController {
   async addUserRating(req: AuthRequest, res: Response) {
     const { id } = req.params;
     const { rating } = req.body;
-    const userId = req.user._id;
+    const userId = req.user!._id;
 
     try {
       const ratingDoc = await Rating.findById(id);
