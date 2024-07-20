@@ -20,7 +20,7 @@ export const googleSignin = async (req: Request, res: Response) => {
       return res.status(400).send("Invalid Google credentials");
     }
 
-    const username = payload.name || payload.email.split("@")[0];
+    const username = payload.email.split("@")[0];
 
     let user = await User.findOne({ email: payload.email });
 
