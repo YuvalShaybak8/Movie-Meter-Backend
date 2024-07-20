@@ -37,9 +37,7 @@ export const googleSignin = async (req: Request, res: Response) => {
     }
 
     const tokens = await generateTokens(
-      user as Document<unknown, object, IUser> &
-        IUser &
-        Required<{ _id: string }>
+      user as Document<unknown, object, IUser> & IUser & Required<{ _id: string }>
     );
     if (!tokens) {
       return res.status(400).send("Error generating tokens");

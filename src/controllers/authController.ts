@@ -4,16 +4,36 @@ import bcrypt from "bcrypt";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { Document } from "mongoose";
 
+// Function to generate access and refresh tokens
+export const generateTokens = async (user: IUser & Document) => {
+  const accessToken = jwt.sign(
+    { _id: user._id, username: user.username },
+    process.env.TOKEN_SECRET!,
+    { expiresIn: "15m" }
+  );
+  const refreshToken = jwt.sign(
+    { _id: user._id, username: user.username },
+    process.env.TOKEN_SECRET!,
+    { expiresIn: "7d" }
+  );
+
+  user.tokens.push(refreshToken);
+  await user.save();
+
+  return { accessToken, refreshToken };
+};
+
 const register = async (req: Request, res: Response) => {
   const { username, email, password } = req.body;
   if (!email || !password || !username) {
-    return res.status(400).send("Username, email and password are required");
+    return res.status(400).send("Username, email, and password are required");
   }
   try {
-    const user = await User.findOne({ email });
-    if (user) {
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
       return res.status(400).send("User already exists");
     }
+
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
     const newUser = await User.create({
@@ -48,33 +68,6 @@ const register = async (req: Request, res: Response) => {
     });
   } catch (err) {
     return res.status(400).send((err as Error).message);
-  }
-};
-
-export const generateTokens = async (
-  user: Document<unknown, object, IUser> & IUser & Required<{ _id: string }>
-): Promise<{ accessToken: string; refreshToken: string }> => {
-  const accessToken = jwt.sign({ _id: user._id }, process.env.TOKEN_SECRET!, {
-    expiresIn: process.env.ACCESS_TOKEN_EXPIRATION,
-  });
-  const random = Math.floor(Math.random() * 1000000).toString();
-  const refreshToken = jwt.sign(
-    { _id: user._id, random: random },
-    process.env.TOKEN_SECRET!,
-    {}
-  );
-  if (!user.tokens) {
-    user.tokens = [];
-  }
-  user.tokens.push(refreshToken);
-  try {
-    await user.save();
-    return {
-      accessToken,
-      refreshToken,
-    };
-  } catch (err) {
-    return null!;
   }
 };
 
@@ -125,34 +118,28 @@ const refresh = async (req: Request, res: Response) => {
     return res.sendStatus(401);
   }
   try {
-    jwt.verify(refreshToken, process.env.TOKEN_SECRET!, (err, data) => {
+    jwt.verify(refreshToken, process.env.TOKEN_SECRET!, async (err, data) => {
       if (err || !data) {
         return res.sendStatus(403);
       }
 
-      (async () => {
-        try {
-          const user = await User.findOne({
-            _id: (data as jwt.JwtPayload)._id,
-          });
-          if (!user) {
-            return res.sendStatus(403);
-          }
-          if (!user.tokens.includes(refreshToken)) {
-            user.tokens = [];
-            await user.save();
-            return res.sendStatus(403);
-          }
-          user.tokens = user.tokens.filter((token) => token !== refreshToken);
-          const tokens = await generateTokens(user);
-          if (!tokens) {
-            return res.status(400).send("Error generating tokens");
-          }
-          return res.status(200).send(tokens);
-        } catch (err) {
-          return res.status(400).send((err as Error).message);
-        }
-      })();
+      const user = await User.findOne({
+        _id: (data as JwtPayload)._id,
+      });
+      if (!user) {
+        return res.sendStatus(403);
+      }
+      if (!user.tokens.includes(refreshToken)) {
+        user.tokens = [];
+        await user.save();
+        return res.sendStatus(403);
+      }
+      user.tokens = user.tokens.filter((token) => token !== refreshToken);
+      const tokens = await generateTokens(user);
+      if (!tokens) {
+        return res.status(400).send("Error generating tokens");
+      }
+      return res.status(200).json(tokens);
     });
   } catch (err) {
     return res.status(400).send((err as Error).message);

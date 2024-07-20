@@ -1,10 +1,5 @@
-import { fileURLToPath } from "url";
-import path from "path";
 import swaggerJSDoc from "swagger-jsdoc";
-
-// Create __dirname
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import path from "path";
 
 const options = {
   definition: {
@@ -20,7 +15,7 @@ const options = {
       },
     ],
   },
-  apis: [path.join(__dirname, "./routes/*.ts")],
+  apis: [path.join(process.cwd(), "src", "routes", "*.ts")],
 };
 
 const swaggerSpec = swaggerJSDoc(options);
