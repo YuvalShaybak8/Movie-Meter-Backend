@@ -1,54 +1,238 @@
-import request from "supertest";
-import app from "../server";
+import { Request, Response } from "express";
+import authController from "../controllers/authController";
 import User from "../models/userModel";
+import jwt from "jsonwebtoken";
 
-// Mock user data
-const mockUser = {
-  username: "testuser",
-  email: "testuser@example.com",
-  password: "password123",
-};
+jest.mock("../models/userModel");
+jest.mock("jsonwebtoken");
 
-let accessToken: string;
-let refreshToken: string;
+describe("AuthController", () => {
+  let mockRequest: Partial<Request>;
+  let mockResponse: Partial<Response>;
+  let responseObject: any;
 
-describe("Auth API", () => {
-  beforeAll(async () => {
-    // Clear the users collection before running tests
-    await User.deleteMany({});
+  beforeEach(() => {
+    mockRequest = {};
+    mockResponse = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn().mockImplementation((result) => {
+        responseObject = result;
+      }),
+      send: jest.fn().mockImplementation((result) => {
+        responseObject = result;
+      }),
+    };
+    responseObject = {};
+    jest.clearAllMocks();
   });
 
-  it("should register a new user", async () => {
-    const res = await request(app).post("/auth/register").send(mockUser);
-    expect(res.statusCode).toEqual(201);
-    expect(res.body).toHaveProperty("user");
-    expect(res.body).toHaveProperty("accessToken");
-    expect(res.body).toHaveProperty("refreshToken");
+  describe("register", () => {
+    it("should create a new user and return tokens", async () => {
+      mockRequest.body = {
+        username: "testuser",
+        email: "test@example.com",
+        password: "password123",
+      };
+
+      const mockUser = {
+        _id: "user1",
+        username: "testuser",
+        email: "test@example.com",
+        password: "hashedPassword",
+      };
+
+      (User.create as jest.Mock).mockResolvedValue(mockUser);
+      (jwt.sign as jest.Mock).mockReturnValue("fakeToken");
+
+      await authController.register(
+        mockRequest as Request,
+        mockResponse as Response
+      );
+
+      expect(mockResponse.status).toHaveBeenCalledWith(201);
+      expect(responseObject).toHaveProperty("user");
+      expect(responseObject).toHaveProperty("accessToken");
+      expect(responseObject).toHaveProperty("refreshToken");
+    });
+
+    it("should handle errors during registration", async () => {
+      mockRequest.body = {
+        username: "testuser",
+        email: "test@example.com",
+        password: "password123",
+      };
+
+      (User.create as jest.Mock).mockRejectedValue(new Error("Database error"));
+
+      await authController.register(
+        mockRequest as Request,
+        mockResponse as Response
+      );
+
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(responseObject).toHaveProperty(
+        "message",
+        "Error registering user"
+      );
+    });
   });
 
-  it("should log in an existing user", async () => {
-    const res = await request(app)
-      .post("/auth/login")
-      .send({ email: mockUser.email, password: mockUser.password });
-    expect(res.statusCode).toEqual(200);
-    expect(res.body).toHaveProperty("user");
-    expect(res.body).toHaveProperty("accessToken");
-    expect(res.body).toHaveProperty("refreshToken");
+  describe("login", () => {
+    it("should login user and return tokens", async () => {
+      mockRequest.body = {
+        email: "test@example.com",
+        password: "password123",
+      };
 
-    accessToken = res.body.accessToken;
-    refreshToken = res.body.refreshToken;
+      const mockUser = {
+        _id: "user1",
+        email: "test@example.com",
+        password: "hashedPassword",
+        comparePassword: jest.fn().mockResolvedValue(true),
+      };
+
+      (User.findOne as jest.Mock).mockResolvedValue(mockUser);
+      (jwt.sign as jest.Mock).mockReturnValue("fakeToken");
+
+      await authController.login(
+        mockRequest as Request,
+        mockResponse as Response
+      );
+
+      expect(mockResponse.status).toHaveBeenCalledWith(200);
+      expect(responseObject).toHaveProperty("user");
+      expect(responseObject).toHaveProperty("accessToken");
+      expect(responseObject).toHaveProperty("refreshToken");
+    });
+
+    it("should handle invalid login", async () => {
+      mockRequest.body = {
+        email: "test@example.com",
+        password: "wrongpassword",
+      };
+
+      const mockUser = {
+        _id: "user1",
+        email: "test@example.com",
+        password: "hashedPassword",
+        comparePassword: jest.fn().mockResolvedValue(false),
+      };
+
+      (User.findOne as jest.Mock).mockResolvedValue(mockUser);
+
+      await authController.login(
+        mockRequest as Request,
+        mockResponse as Response
+      );
+
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(responseObject).toHaveProperty("message", "Invalid credentials");
+    });
+
+    it("should handle errors during login", async () => {
+      mockRequest.body = {
+        email: "test@example.com",
+        password: "password123",
+      };
+
+      (User.findOne as jest.Mock).mockRejectedValue(
+        new Error("Database error")
+      );
+
+      await authController.login(
+        mockRequest as Request,
+        mockResponse as Response
+      );
+
+      expect(mockResponse.status).toHaveBeenCalledWith(500);
+      expect(responseObject).toHaveProperty("message", "Error logging in");
+    });
   });
 
-  it("should refresh the access token", async () => {
-    const res = await request(app).post("/auth/refresh").send({ refreshToken });
-    expect(res.statusCode).toEqual(200);
-    expect(res.body).toHaveProperty("accessToken");
+  describe("refresh", () => {
+    it("should refresh tokens", async () => {
+      mockRequest.body = {
+        refreshToken: "validRefreshToken",
+      };
+
+      (jwt.verify as jest.Mock).mockReturnValue({ _id: "user1" });
+      (jwt.sign as jest.Mock).mockReturnValue("newAccessToken");
+
+      await authController.refresh(
+        mockRequest as Request,
+        mockResponse as Response
+      );
+
+      expect(mockResponse.status).toHaveBeenCalledWith(200);
+      expect(responseObject).toHaveProperty("accessToken", "newAccessToken");
+    });
+
+    it("should handle invalid refresh token", async () => {
+      mockRequest.body = {
+        refreshToken: "invalidRefreshToken",
+      };
+
+      (jwt.verify as jest.Mock).mockRejectedValue(new Error("Invalid token"));
+
+      await authController.refresh(
+        mockRequest as Request,
+        mockResponse as Response
+      );
+
+      expect(mockResponse.status).toHaveBeenCalledWith(403);
+      expect(responseObject).toHaveProperty("message", "Invalid token");
+    });
+
+    it("should handle errors during token refresh", async () => {
+      mockRequest.body = {
+        refreshToken: "validRefreshToken",
+      };
+
+      (jwt.verify as jest.Mock).mockReturnValue({ _id: "user1" });
+      (jwt.sign as jest.Mock).mockRejectedValue(new Error("Database error"));
+
+      await authController.refresh(
+        mockRequest as Request,
+        mockResponse as Response
+      );
+
+      expect(mockResponse.status).toHaveBeenCalledWith(500);
+      expect(responseObject).toHaveProperty(
+        "message",
+        "Error refreshing token"
+      );
+    });
   });
 
-  it("should log out the user", async () => {
-    const res = await request(app)
-      .post("/auth/logout")
-      .send({ token: refreshToken });
-    expect(res.statusCode).toEqual(200);
+  describe("logout", () => {
+    it("should logout user", async () => {
+      mockRequest.body = {
+        refreshToken: "validRefreshToken",
+      };
+
+      await authController.logout(
+        mockRequest as Request,
+        mockResponse as Response
+      );
+
+      expect(mockResponse.status).toHaveBeenCalledWith(200);
+      expect(responseObject).toBe("Logout successful");
+    });
+
+    it("should handle errors during logout", async () => {
+      mockRequest.body = {
+        refreshToken: "invalidRefreshToken",
+      };
+
+      (jwt.verify as jest.Mock).mockRejectedValue(new Error("Invalid token"));
+
+      await authController.logout(
+        mockRequest as Request,
+        mockResponse as Response
+      );
+
+      expect(mockResponse.status).toHaveBeenCalledWith(403);
+      expect(responseObject).toHaveProperty("message", "Invalid token");
+    });
   });
 });
