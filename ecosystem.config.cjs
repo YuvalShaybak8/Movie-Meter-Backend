@@ -17,6 +17,7 @@ module.exports = {
         HTTPS_PORT: "5443",
         ACCESS_TOKEN_EXPIRATION: "1h",
       },
+      node_args: "--experimental-specifier-resolution=node",
     },
   ],
 };
