@@ -8,7 +8,7 @@ module.exports = {
         TOKEN_SECRET: "76787fda10b163806e5c51ff0c0e3911f4a6e2ef158327db15ee",
         ACCESS_TOKEN_EXPIRATION: "1h",
         REFRESH_TOKEN_EXPIRATION: "14d",
-        HTTPS_PORT: "443",
+        HTTPS_PORT: "4000",
         HTTP_PORT: "80",
         NODE_ENV: "production",
         GOOGLE_CLIENT_ID:

@@ -16,8 +16,8 @@ import authRoute from "./routes/authRoutes";
 dotenv.config();
 
 const app = express();
-const HTTP_PORT = process.env.HTTP_PORT;
-const HTTPS_PORT = process.env.HTTPS_PORT;
+const HTTP_PORT = process.env.HTTP_PORT || 80;
+const HTTPS_PORT = process.env.HTTPS_PORT || 443;
 const projectRoot = process.cwd();
 
 // Check for GOOGLE_CLIENT_ID
@@ -37,26 +37,28 @@ app.use(cors(corsOptions));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
-app.use(express.static(path.resolve("public")));
+// Serve static files from the public directory
+app.use(express.static(path.join(projectRoot, "public")));
 
+// API routes
 app.use("/auth", authRoute);
 app.use("/users", UserRoute);
 app.use("/ratings", RatingRoute);
-app.use("/uploads", express.static("uploads"));
-
-if (process.env.NODE_ENV === "production") {
-  // Serve React app from the build directory
-  app.use(express.static(path.join(projectRoot, "build")));
-  app.get("*", (req, res) => {
-    res.sendFile(path.join(projectRoot, "build", "index.html"));
-  });
-}
+app.use("/uploads", express.static(path.join(projectRoot, "uploads")));
 
 // Use Swagger UI
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
+// Serve the frontend build in production mode
+if (process.env.NODE_ENV === "production") {
+  app.use(express.static(path.join(projectRoot, "public")));
+  app.get("*", (req, res) => {
+    res.sendFile(path.join(projectRoot, "public", "index.html"));
+  });
+}
+
 app.get("/**", (req, res) => {
-  res.sendFile(path.resolve("public/index.html"));
+  res.sendFile(path.resolve("public", "index.html"));
 });
 
 const startServer = async () => {
