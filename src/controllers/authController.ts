@@ -9,12 +9,12 @@ export const generateTokens = async (user: IUser & Document) => {
   const accessToken = jwt.sign(
     { _id: user._id, username: user.username },
     process.env.TOKEN_SECRET!,
-    { expiresIn: "15m" }
+    { expiresIn: process.env.ACCESS_TOKEN_EXPIRATION }
   );
   const refreshToken = jwt.sign(
     { _id: user._id, username: user.username },
     process.env.TOKEN_SECRET!,
-    { expiresIn: "7d" }
+    { expiresIn: process.env.REFRESH_TOKEN_EXPIRATION }
   );
 
   user.tokens.push(refreshToken);

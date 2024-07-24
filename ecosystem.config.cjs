@@ -3,21 +3,17 @@ module.exports = {
     {
       name: "movie-meter-server",
       script: "./dist/server.js",
-      instances: 1,
-      autorestart: true,
-      watch: false,
-      max_memory_restart: "1G",
-      env_file: ".env",
-      env_development: {
-        NODE_ENV: "development",
-      },
       env_production: {
-        NODE_ENV: "production",
-        HTTP_PORT: "5500",
-        HTTPS_PORT: "5443",
+        DATABASE_URL: "mongodb://server:123123123@localhost:21771/web_class",
+        TOKEN_SECRET: "76787fda10b163806e5c51ff0c0e3911f4a6e2ef158327db15ee",
         ACCESS_TOKEN_EXPIRATION: "1h",
+        REFRESH_TOKEN_EXPIRATION: "14d",
+        HTTPS_PORT: "443",
+        HTTP_PORT: "80",
+        NODE_ENV: "production",
+        GOOGLE_CLIENT_ID:
+          "403571040301-2ka5e09b8upflfk8qmpfebo4sg08gde0.apps.googleusercontent.com",
       },
-      node_args: "--experimental-specifier-resolution=node",
     },
   ],
 };
