@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import mongoose from "mongoose";
 import bodyParser from "body-parser";
 import https from "https";
+import http from "http";
 import fs from "fs";
 import swaggerUi from "swagger-ui-express";
 import swaggerSpec from "./swaggerConfig";
@@ -36,6 +37,15 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+
+// Redirect HTTP to HTTPS
+app.use((req, res, next) => {
+  if (req.secure) {
+    next();
+  } else {
+    res.redirect(`https://${req.headers.host}${req.url}`);
+  }
+});
 
 // Serve static files from the public directory
 app.use(express.static(path.join(projectRoot, "public")));
@@ -72,9 +82,11 @@ const startServer = async () => {
 
     // Only start the server if not in test mode
     if (process.env.NODE_ENV !== "test") {
-      // HTTP Server
-      app.listen(HTTP_PORT, () => {
-        console.log(`HTTP Server running on port ${HTTP_PORT}`);
+      // HTTP Server (only for redirection)
+      http.createServer(app).listen(HTTP_PORT, () => {
+        console.log(
+          `HTTP Server running on port ${HTTP_PORT} (only for redirection)`
+        );
       });
 
       // HTTPS Server
