@@ -84,9 +84,7 @@ const startServer = async () => {
     if (process.env.NODE_ENV !== "test") {
       // HTTP Server (only for redirection)
       http.createServer(app).listen(HTTP_PORT, () => {
-        console.log(
-          `HTTP Server running on port ${HTTP_PORT} (only for redirection)`
-        );
+        console.log(`HTTP Server running on port ${HTTP_PORT}`);
       });
 
       // HTTPS Server
