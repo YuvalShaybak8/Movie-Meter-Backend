@@ -5,6 +5,14 @@ node_modules/
 
 .env
 
+node20.cs.colman.ac.il.crt
+
+node20.cs.colman.ac.il.css
+
+node20.cs.colman.ac.il.key
+
+node20.cs.colman.ac.il.csr
+
 # Expo
 .expo/
 dist/

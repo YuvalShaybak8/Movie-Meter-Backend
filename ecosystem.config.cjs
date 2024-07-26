@@ -2,7 +2,7 @@ module.exports = {
   apps: [
     {
       name: "movie-meter-server",
-      script: "./dist/src/server.js",
+      script: "./dist/server.js",
       env_production: {
         NODE_ENV: "production",
         DATABASE_URL: "mongodb://server:123123123@localhost:21771/web_class",

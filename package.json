@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "start": "node dist/src/server.js",
-    "build": "tsc",
+    "build": "tsc -p tsconfig_prod.json",
     "dev": "nodemon --exec npx tsx src/server.ts",
     "test": "jest --config jest.config.ts --detectOpenHandles --forceExit",
     "testAuth": "jest --config jest.config.ts --detectOpenHandles --forceExit ./src/tests/auth.test.ts",

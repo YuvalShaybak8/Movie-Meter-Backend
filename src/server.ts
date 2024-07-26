@@ -90,8 +90,12 @@ const startServer = async () => {
       // HTTPS Server
       try {
         const httpsOptions = {
-          key: fs.readFileSync(path.join(projectRoot, "server.key")),
-          cert: fs.readFileSync(path.join(projectRoot, "server.cert")),
+          key: fs.readFileSync(
+            path.join(projectRoot, "node20.cs.colman.ac.il.key")
+          ),
+          cert: fs.readFileSync(
+            path.join(projectRoot, "node20.cs.colman.ac.il.crt")
+          ),
         };
 
         https.createServer(httpsOptions, app).listen(HTTPS_PORT, () => {
