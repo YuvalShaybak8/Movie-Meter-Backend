@@ -10,7 +10,8 @@
     "dev": "nodemon --exec npx tsx src/server.ts",
     "test": "jest --config jest.config.ts --detectOpenHandles --forceExit",
     "testAuth": "jest --config jest.config.ts --detectOpenHandles --forceExit ./src/tests/auth.test.ts",
-    "lint": "eslint . --ext .ts"
+    "lint": "eslint . --ext .ts",
+    "prod": "tsc -p tsconfig_prod.json && pm2 start ecosystem.config.cjs --env production"
   },
   "keywords": [],
   "author": "",
