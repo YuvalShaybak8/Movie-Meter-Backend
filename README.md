@@ -24,25 +24,25 @@ Welcome to Movie Meter, a dynamic web application designed to enhance your movie
 Here are some snapshots of the Movie Meter in action:
 
 *Login and Signup Page*
-https://github.com/YuvalShaybak8/Movie_Meter_Frontend/blob/be9cb1dad18b994764fc199261f5a9213b9c9682/1.jpg
+![1](https://github.com/user-attachments/assets/bd3d350b-08ec-422a-83db-78a1596f3cb2)
 
 *Homepage with all the movies that user in the website rate* 
-https://github.com/YuvalShaybak8/Movie_Meter_Frontend/blob/main/2.jpg?raw=true
+![2](https://github.com/user-attachments/assets/a92dbf4d-e74f-40d7-aa50-9c54c650852c)
 
 *My Rating Page*
-https://github.com/YuvalShaybak8/Movie_Meter_Frontend/blob/main/7.jpg?raw=true
+![7](https://github.com/user-attachments/assets/bf8f1f0d-c6e2-4047-b32a-03eaea060384)
 
 *Personalized user profile*
-https://github.com/YuvalShaybak8/Movie_Meter_Frontend/blob/main/6.jpg?raw=true
+![6](https://github.com/user-attachments/assets/09890bee-5ab7-49bf-9abc-5cbee0b2182f)
 
 *Create rating page*
-https://github.com/YuvalShaybak8/Movie_Meter_Frontend/blob/main/5.jpg?raw=true
+![5](https://github.com/user-attachments/assets/2f733820-73dc-4bde-8076-2b096aa24574)
 
 *Entering to a Trailer of the movie that rate with API to TMDB*
-https://github.com/YuvalShaybak8/Movie_Meter_Frontend/blob/main/4.jpg?raw=true
+![4](https://github.com/user-attachments/assets/1cd5923a-cd65-4a80-88a0-fa9f9ce717bf)
 
 *Comments page to each rating*
-https://github.com/YuvalShaybak8/Movie_Meter_Frontend/blob/main/3.jpg?raw=true
+![3](https://github.com/user-attachments/assets/6df34bbd-3322-42ee-94c0-d31200aeac24)
 
 ## Video Demo
 
